@@ -1,0 +1,19 @@
+.editor-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: start;
+    align-items: start;
+    width: 100%;
+    height: 100%;
+}
+
+.editor-header-container {
+    width: 100%;
+}
+
+.editor-body-container {
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    background-color: #2a2a2a;
+}
