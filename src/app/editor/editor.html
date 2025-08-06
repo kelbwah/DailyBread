@@ -1,4 +1,19 @@
-<section class="editor-container">
-    <app-editor-header class="editor-header-container"></app-editor-header>
-    <app-editor-body class="editor-body-container"></app-editor-body>
+<section class="editor-container max-w-2xl">
+    <div class="editor-header-container">
+        <div class="editor-header max-w-2xl">
+            <h3 style="user-select: none;">daily bread ✞</h3>
+            <div class="actions-container">
+                <button data-tooltip="View History">
+                    <ng-icon size="16" name="radixReader" /> 
+                </button>
+                <button data-tooltip="New Journal">
+                    <ng-icon size="16" name="radixFilePlus" />
+                </button>
+                <button (click)="onSave()" data-tooltip="Save Journal">
+                    <ng-icon size="16" name="radixUpdate" />
+                </button>
+            </div>
+        </div>
+    </div>
+    <div id="editor-js"></div>
 </section>

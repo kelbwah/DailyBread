@@ -57,6 +57,7 @@ body, html {
 }
 
 button {
+    position: relative;
     cursor: pointer;
     padding-inline: 1rem;
     padding: 0.75rem;
@@ -78,4 +79,62 @@ button:hover {
 
 button:active {
     background-color: #2a2a2a80;
+}
+
+[data-tooltip] {
+    position: relative;
+    z-index: 9999;
+}
+
+[data-tooltip]::after {
+    content: attr(data-tooltip);
+    background-color: white;
+    width: 75px;
+    height: 100%;
+    display: flex;
+    padding: 0.15rem;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    border-radius: 0.75rem;
+    position: absolute;
+    color: black;
+    top: 100%;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+[data-tooltip]:hover::after {
+    opacity: 1;
+    visibility: visible;
+}
+
+.max-w-2xl {
+  max-width: 42rem;
+}
+
+.codex-editor {
+    margin-inline: 1.75rem;
+}
+
+.codex-editor__redactor {
+  padding-bottom: 0 !important; /* This will override the inline style */
+}
+
+.ce-toolbar__plus,
+.ce-toolbar__settings-btn,
+.ce-paragraph { 
+  color: white !important;
+}
+
+.ce-toolbar__plus,
+.ce-toolbar__settings-btn {
+  color: #333 !important
+}
+
+.ce-toolbar__plus:hover,
+.ce-toolbar__settings-btn:hover {
+  color: #333 !important;
 }
