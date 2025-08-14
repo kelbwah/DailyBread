@@ -3,13 +3,13 @@
         <div class="editor-header max-w-2xl">
             <h3 style="user-select: none;">daily bread ✞</h3>
             <div class="actions-container">
-                <button data-tooltip="View History">
+                <button class="action-button" (click)="journalService.toggleJournalHistoryModal()" data-tooltip="View History">
                     <ng-icon size="16" name="radixReader" /> 
                 </button>
-                <button data-tooltip="New Journal">
+                <button class="action-button" (click)="journalService.createEmptyJournal(editor)" data-tooltip="New Journal">
                     <ng-icon size="16" name="radixFilePlus" />
                 </button>
-                <button (click)="onSave()" data-tooltip="Save Journal">
+                <button class="action-button" (click)="onSave()" data-tooltip="Save Journal">
                     <ng-icon size="16" name="radixUpdate" />
                 </button>
             </div>
@@ -17,3 +17,36 @@
     </div>
     <div id="editor-js"></div>
 </section>
+
+@if (journalService.isJournalHistoryModalOpen()) {
+    <div class="modal-bg fade-in" (click)="journalService.toggleJournalHistoryModal()"></div>
+    <div class="modal-container max-w-2xl fade-in">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Recent Journals</h2>
+                <ng-icon class="modal-close-button" (click)="journalService.toggleJournalHistoryModal()" size="16" strokeWidth="12" name="radixExit" />
+            </div>
+            <div class="modal-body">
+                @for (item of journalService.allJournals(); track item.id) {
+                    <div class="journal-item-container">
+                        <div class="journal-item" (click)="journalService.openJournal(editor, item)">
+                            {{journalService.getFormattedDate(item.time)}}
+                            @if (item.blocks.length > 0 && item.blocks[0]?.data?.text) {
+                                <p class="journal-item-preview">{{item.blocks[0]?.data?.text}}</p>
+                            } @else {
+                                <p class="journal-item-preview">empty journal</p>
+                            }
+                        </div>
+                        <button class="delete-button" (click)="journalService.deleteJournal(editor, item.id)">
+                            <ng-icon size="24" name="radixTrash" />
+                        </button>
+                    </div>
+                } @empty {
+                    <h3>
+                        No journals saved locally yet.
+                    </h3> 
+                }
+            </div>
+        </div>
+    </div>
+}

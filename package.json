@@ -31,6 +31,7 @@
     "@editorjs/list": "^2.0.8",
     "@ng-icons/core": "^32.1.0",
     "@ng-icons/radix-icons": "^32.1.0",
+    "dexie": "^4.0.11",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },
