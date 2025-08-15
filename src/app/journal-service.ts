@@ -105,12 +105,14 @@ export class JournalService extends Dexie {
     await this.refreshJournals();
 
     const journals = this.allJournals();
+    let latestJournal: Journal;
     if (journals.length === 0) {
-      await this.createEmptyJournal();
+      latestJournal = await this.createEmptyJournal();
     } else {
-      const latest = journals[0];
-      this.currentJournal.set(latest);
-      this.saveLatestJournalId(latest.id);
+      latestJournal = journals[0];
     }
+
+    this.currentJournal.set(latestJournal);
+    this.saveLatestJournalId(latestJournal.id);
   }
 }

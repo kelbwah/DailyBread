@@ -70,33 +70,23 @@ export class Editor implements OnInit, OnDestroy {
       .subscribe(() => this.onSave());
   }
 
-  openDialog() {
+  protected openDialog() {
     this.dialogService.openDialog(this.journalHistoryDialogComponent);
   }
 
-  async createJournal() {
+  protected async createJournal() {
     const newJournal = await this.journalService.createEmptyJournal();
     await this.editorService.render(newJournal);
     this.toastService.openToast('New journal created');
   }
 
-  async deleteJournal(journalId: string) {
-    await this.journalService.deleteJournal(journalId);
-    const current = this.journalService.currentJournal();
-    if (current) await this.editorService.render(current);
-  }
-
-  async onSave() {
+  protected async onSave() {
     const state = await this.editorService.save();
     if (!state) return;
 
-    const currentJournalId =
-      this.journalService.currentJournal().id || crypto.randomUUID();
+    const currentJournalId = this.journalService.getLatestJournalId();
 
-    // Could also create a new journal objct given the currentJournalId and the state
-    // to make it easier for saveOutputData to just take in a var of type Journal
-
-    await this.journalService.saveOutputData(currentJournalId, state);
+    await this.journalService.saveOutputData(currentJournalId!, state);
     this.toastService.openToast('Journal saved.');
   }
 }

@@ -37,14 +37,16 @@ export class JournalHistoryDialog {
   private journalService = inject(JournalService);
   private editorService = inject(EditorService);
 
-  journals = this.journalService.allJournals;
+  protected journals = this.journalService.allJournals;
 
-  async openJournal(selectedJournal: Journal) {
+  protected async openJournal(selectedJournal: Journal) {
     await this.journalService.openJournal(selectedJournal);
     await this.editorService.render(selectedJournal);
   }
 
-  async deleteJournal(journalId: string) {
+  protected async deleteJournal(journalId: string) {
     await this.journalService.deleteJournal(journalId);
+
+    await this.openJournal(this.journalService.currentJournal());
   }
 }
