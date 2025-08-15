@@ -1,9 +1,5 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  inject,
-  OnInit,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { DatesPipe } from '../dates-pipe';
 import { MatButtonModule } from '@angular/material/button';
 import {
   MatDialogActions,
@@ -11,10 +7,10 @@ import {
   MatDialogContent,
   MatDialogTitle,
 } from '@angular/material/dialog';
-import { Journal, JournalDB } from '../journal-db';
+import { JournalService, Journal } from '../journal-service';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { radixTrash } from '@ng-icons/radix-icons';
-import { Editor } from '../editor/editor';
+import { EditorService } from '../editor-service';
 
 @Component({
   selector: 'app-journal-history-dialog',
@@ -25,30 +21,30 @@ import { Editor } from '../editor/editor';
     MatDialogClose,
     MatButtonModule,
     NgIcon,
+    DatesPipe,
   ],
   viewProviders: [
     provideIcons({
       radixTrash,
     }),
   ],
-  providers: [JournalDB],
+  providers: [JournalService],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './journal-history-dialog.html',
   styleUrl: './journal-history-dialog.css',
 })
-export class JournalHistoryDialog implements OnInit {
-  protected journalService = inject(JournalDB);
+export class JournalHistoryDialog {
+  private journalService = inject(JournalService);
+  private editorService = inject(EditorService);
 
-  async ngOnInit() {
-    this.journalService.allJournals.set(
-      await this.journalService.getJournals()
-    );
+  journals = this.journalService.allJournals;
+
+  async openJournal(selectedJournal: Journal) {
+    await this.journalService.openJournal(selectedJournal);
+    await this.editorService.render(selectedJournal);
   }
 
-  openJournal(selectedJournal: Journal) {
-    this.journalService.currentJournal.set(selectedJournal);
-
-    Editor.editor.isReady;
-    Editor.editor.render(selectedJournal);
+  async deleteJournal(journalId: string) {
+    await this.journalService.deleteJournal(journalId);
   }
 }

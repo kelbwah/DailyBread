@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   radixExit,
@@ -7,13 +7,12 @@ import {
   radixUpdate,
   radixTrash,
 } from '@ng-icons/radix-icons';
-import EditorJS from '@editorjs/editorjs';
-import Header from '@editorjs/header';
-import List from '@editorjs/list';
-import { JournalDB } from '../journal-db';
+import { Subject, debounceTime, takeUntil } from 'rxjs';
+import { JournalService } from '../journal-service';
 import { ToastService } from '../toast-service';
 import { DialogService } from '../dialog-service';
 import { JournalHistoryDialog } from '../journal-history-dialog/journal-history-dialog';
+import { EditorService } from '../editor-service';
 
 @Component({
   selector: 'app-editor',
@@ -27,102 +26,77 @@ import { JournalHistoryDialog } from '../journal-history-dialog/journal-history-
       radixTrash,
     }),
   ],
-  providers: [JournalDB],
   templateUrl: './editor.html',
   styleUrl: './editor.css',
 })
-export class Editor implements OnInit {
-  static editor: EditorJS;
-  protected journalService = inject(JournalDB);
-  protected _dialogService = inject(DialogService);
-  private _toastService = inject(ToastService);
+export class Editor implements OnInit, OnDestroy {
+  private editorService = inject(EditorService);
+  private journalService = inject(JournalService);
+  private dialogService = inject(DialogService);
+  private toastService = inject(ToastService);
+
+  private saveTrigger$ = new Subject<void>();
+  private destroyTrigger$ = new Subject<void>();
+
   journalHistoryDialogComponent = JournalHistoryDialog;
-  currentJournal = computed(this.journalService.currentJournal);
 
   ngOnInit(): void {
-    Editor.editor = new EditorJS({
+    this.initEditor();
+    this.setupAutoSave();
+  }
+
+  ngOnDestroy(): void {
+    this.destroyTrigger$.next();
+    this.destroyTrigger$.complete();
+    this.editorService.destroy();
+  }
+
+  private async initEditor() {
+    await this.editorService.init({
       holder: 'editor-js',
       autofocus: true,
-      placeholder: 'start journaling here...',
-      tools: {
-        header: {
-          class: Header as any,
-          inlineToolbar: ['link'],
-        },
-        list: {
-          class: List as any,
-          inlineToolbar: ['link', 'bold'],
-        },
-      },
+      placeholder: 'Start journaling here...',
       onReady: async () => {
-        this.journalService.allJournals.set(
-          await this.journalService.getJournals()
-        );
-        await this.journalService.openLatestJournal();
-        if (await this.editorLoaded()) {
-          await Editor.editor.render(this.currentJournal());
-        }
+        const journal = this.journalService.currentJournal();
+        if (journal) await this.editorService.render(journal);
       },
-      onChange: async () => {
-        await this.onSave();
-        this._toastService.openToast('File saved!');
-      },
+      onChange: () => this.saveTrigger$.next(),
     });
   }
 
+  private setupAutoSave() {
+    this.saveTrigger$
+      .pipe(debounceTime(1250), takeUntil(this.destroyTrigger$))
+      .subscribe(() => this.onSave());
+  }
+
   openDialog() {
-    this._dialogService.openDialog(this.journalHistoryDialogComponent);
+    this.dialogService.openDialog(this.journalHistoryDialogComponent);
   }
 
   async createJournal() {
     const newJournal = await this.journalService.createEmptyJournal();
-
-    if (await this.editorLoaded()) {
-      await Editor.editor.render(newJournal);
-    }
-
-    this._toastService.openToast('File created!');
-  }
-
-  async getCurrentEditorState() {
-    try {
-      return await Editor.editor.save();
-    } catch (error) {
-      console.error('Failed to get current editor state', error);
-      return null;
-    }
+    await this.editorService.render(newJournal);
+    this.toastService.openToast('New journal created');
   }
 
   async deleteJournal(journalId: string) {
-    this.journalService.deleteJournal(journalId);
-    if (await this.editorLoaded()) {
-      await Editor.editor.render(this.journalService.currentJournal());
-    }
+    await this.journalService.deleteJournal(journalId);
+    const current = this.journalService.currentJournal();
+    if (current) await this.editorService.render(current);
   }
 
   async onSave() {
-    const currentEditorState = await Editor.editor.save();
-    if (!currentEditorState) return;
+    const state = await this.editorService.save();
+    if (!state) return;
 
-    const currentJournalId = !this.journalService.currentJournal().id
-      ? crypto.randomUUID()
-      : this.journalService.currentJournal().id;
+    const currentJournalId =
+      this.journalService.currentJournal().id || crypto.randomUUID();
 
-    await this.journalService.saveOutputData(
-      currentJournalId,
-      currentEditorState
-    );
+    // Could also create a new journal objct given the currentJournalId and the state
+    // to make it easier for saveOutputData to just take in a var of type Journal
 
-    this._toastService.openToast('File saved!');
-  }
-
-  async editorLoaded(): Promise<boolean> {
-    try {
-      await Editor.editor.isReady;
-      return true;
-    } catch (err: any) {
-      console.error('Error caught while loading editor.js:', err);
-      return false;
-    }
+    await this.journalService.saveOutputData(currentJournalId, state);
+    this.toastService.openToast('Journal saved.');
   }
 }

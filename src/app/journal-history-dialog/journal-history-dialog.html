@@ -2,17 +2,17 @@
 <mat-dialog-content class="modal-content-container">
   <h4>Click on a journal to open it</h4>
   <div class="journal-results-container">
-    @for (item of journalService.allJournals(); track item.id) {
+    @for (item of journals(); track item.id) {
       <div class="journal-item-container">
         <div class="journal-item" (click)="openJournal(item)" mat-dialog-close>
-          {{ journalService.getFormattedDate(item.time)}}
+          {{ item.time | format_date }} 
           @if (item.blocks.length > 0 && item.blocks[0]?.data?.text) {
             <p class="journal-item-preview">{{item.blocks[0]?.data?.text}}</p>
           } @else {
             <p class="journal-item-preview">empty journal</p>
           }
         </div>
-        <button class="delete-button" (click)="journalService.deleteJournal(item.id)">
+        <button class="delete-button" (click)="deleteJournal(item.id)">
           <ng-icon size="20" name="radixTrash" />
         </button>
       </div>
