@@ -66,7 +66,7 @@ export class Editor implements OnInit, OnDestroy {
 
   private setupAutoSave() {
     this.saveTrigger$
-      .pipe(debounceTime(1250), takeUntil(this.destroyTrigger$))
+      .pipe(debounceTime(1000), takeUntil(this.destroyTrigger$))
       .subscribe(() => this.onSave());
   }
 

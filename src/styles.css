@@ -39,7 +39,8 @@ body, html {
     width: 75px;
     height: 100%;
     display: flex;
-    padding: 1px;
+    padding-block: 1px;
+    padding-inline: 4px;
     flex-direction: column;
     justify-content: center;
     align-items: center;
