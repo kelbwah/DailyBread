@@ -1,6 +1,6 @@
 import { signal, WritableSignal } from '@angular/core';
+import { toObservable } from '@angular/core/rxjs-interop';
 import Dexie, { Table } from 'dexie';
-import EditorJS from '@editorjs/editorjs';
 
 export interface Journal {
   id: string;
@@ -13,11 +13,7 @@ export class JournalDB extends Dexie {
   latestJournalId!: string;
   journals!: Table<Journal, string>;
   allJournals: WritableSignal<Journal[]> = signal([]);
-  isJournalHistoryModalOpen: WritableSignal<boolean> = signal(false);
-  currentJournal: WritableSignal<{ id: string; data: Journal }> = signal({
-    id: '',
-    data: {} as Journal,
-  });
+  currentJournal: WritableSignal<Journal> = signal({} as Journal);
 
   constructor() {
     super('JournalDatabase');
@@ -36,7 +32,7 @@ export class JournalDB extends Dexie {
     return localStorage.getItem('latest_journal');
   }
 
-  async saveOutputData(editor: EditorJS, journalId: string, outputData: any) {
+  async saveOutputData(journalId: string, outputData: any) {
     if (!outputData?.blocks?.length) return;
 
     const updatedJournal: Journal = {
@@ -49,14 +45,11 @@ export class JournalDB extends Dexie {
     await db.journals.put(updatedJournal, journalId);
     await db.setLatestJournalId(journalId);
 
-    this.currentJournal.set({
-      id: journalId,
-      data: updatedJournal,
-    });
+    this.currentJournal.set(updatedJournal);
     this.allJournals.set(await this.getJournals());
   }
 
-  async createEmptyJournal(editor: EditorJS) {
+  async createEmptyJournal() {
     const newJournal: Journal = {
       id: crypto.randomUUID(),
       time: Date.now(),
@@ -67,13 +60,7 @@ export class JournalDB extends Dexie {
     await db.journals.add(newJournal);
     await db.setLatestJournalId(newJournal.id);
 
-    this.currentJournal.set({
-      id: newJournal.id,
-      data: newJournal,
-    });
-
-    await editor.isReady;
-    await editor.render(newJournal);
+    this.currentJournal.set(newJournal);
 
     return newJournal;
   }
@@ -85,28 +72,21 @@ export class JournalDB extends Dexie {
     return journals;
   }
 
-  async openLatestJournal(editor: EditorJS) {
+  async openLatestJournal() {
     let latestId = db.getLatestJournalId();
 
     if (!latestId) {
-      const newJournal = await this.createEmptyJournal(editor);
+      const newJournal = await this.createEmptyJournal();
       latestId = newJournal.id;
     }
 
     const journal = await db.journals.get(latestId);
     if (!journal) {
-      const newJournal = await this.createEmptyJournal(editor);
+      const newJournal = await this.createEmptyJournal();
       latestId = newJournal.id;
     }
 
-    this.currentJournal.set({
-      id: latestId,
-      data: journal!,
-    });
-  }
-
-  async toggleJournalHistoryModal() {
-    this.isJournalHistoryModalOpen.update((prev) => !prev);
+    this.currentJournal.set(journal!);
   }
 
   getFormattedDate(date: any) {
@@ -119,24 +99,14 @@ export class JournalDB extends Dexie {
     });
   }
 
-  async openJournal(editor: EditorJS, selectedJournal: any) {
-    this.currentJournal.set(selectedJournal);
-    this.toggleJournalHistoryModal();
-
-    await editor.isReady;
-    await editor.render(selectedJournal);
-  }
-
-  async deleteJournal(editor: EditorJS, journalId: any) {
+  async deleteJournal(journalId: any) {
     await db.journals.delete(journalId);
 
     const allJournals = await this.getJournals();
     if (allJournals.length === 0) {
-      await this.createEmptyJournal(editor);
+      await this.createEmptyJournal();
     } else {
-      this.currentJournal.set({ id: allJournals[0].id, data: allJournals[0] });
-      await editor.isReady;
-      await editor.render(this.currentJournal().data);
+      this.currentJournal.set(allJournals[0]);
     }
 
     this.allJournals.set(await this.getJournals());

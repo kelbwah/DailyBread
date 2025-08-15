@@ -1,0 +1,28 @@
+<h2 mat-dialog-title>Journal History</h2>
+<mat-dialog-content class="modal-content-container">
+  <h4>Click on a journal to open it</h4>
+  <div class="journal-results-container">
+    @for (item of journalService.allJournals(); track item.id) {
+      <div class="journal-item-container">
+        <div class="journal-item" (click)="openJournal(item)" mat-dialog-close>
+          {{ journalService.getFormattedDate(item.time)}}
+          @if (item.blocks.length > 0 && item.blocks[0]?.data?.text) {
+            <p class="journal-item-preview">{{item.blocks[0]?.data?.text}}</p>
+          } @else {
+            <p class="journal-item-preview">empty journal</p>
+          }
+        </div>
+        <button class="delete-button" (click)="journalService.deleteJournal(item.id)">
+          <ng-icon size="20" name="radixTrash" />
+        </button>
+      </div>
+    } @empty {
+      <h3>
+        No journals saved locally yet.
+      </h3>
+    }
+  </div>
+</mat-dialog-content>
+<mat-dialog-actions>
+  <button matButton mat-dialog-close>Close</button>
+</mat-dialog-actions>
